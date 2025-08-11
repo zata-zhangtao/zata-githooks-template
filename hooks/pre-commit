@@ -1,0 +1,33 @@
+#!/bin/python
+import subprocess
+import os
+
+
+if __name__ == "__main__":
+    files = subprocess.check_output(['git', 'diff', '--cached', '--name-status'], text=True, encoding='utf-8').split('\n')
+    for file in files:
+        if len(file.split("\t")[0]) > 0 and file.split("\t")[0] != 'D':
+            file_path = file.split("\t")[-1]
+            file_size = os.path.getsize(file_path)
+            size_in_mb = file_size / (1024 * 1024)
+            if size_in_mb >= 50:
+                with open('.gitignore', 'a', encoding='utf-8') as f:
+                    f.write(file_path + '\n')
+                try:
+                    # Remove the file from the Git index (staged area)
+                    subprocess.check_output(['git', 'rm', '--cached', file_path])
+                    print("Removed {} from stage".format(file_path))
+                except subprocess.CalledProcessError as e:
+                    print("Error removing file from stage: {}".format(e))
+                
+                try:
+                    # Reset the file to unstage changes
+                    subprocess.check_output(['git', 'reset', file_path])
+                except subprocess.CalledProcessError as e:
+                    print("Error while resetting file: {}".format(e))
+
+                print("The file is larger than 50MB and has been added to .gitignore. Please confirm and recommit!")
+                print(file_path + "\n")
+                exit(1)
+
+
