@@ -188,32 +188,7 @@ git config core.autocrlf input
    - 确保新成员了解钩子的作用
    - 定期审查和更新钩子脚本
 
-## 使用工具管理钩子（可选）
 
-### Node.js 项目 - Husky
-
-```bash
-npm install husky --save-dev
-npx husky install
-```
-
-### Python 项目 - pre-commit
-
-```bash
-pip install pre-commit
-pre-commit install
-```
-
-创建 `.pre-commit-config.yaml`：
-```yaml
-repos:
-  - repo: local
-    hooks:
-      - id: check-file-size
-        name: Check file size
-        entry: python hooks/pre-commit
-        language: system
-```
 
 ## 贡献指南
 
