@@ -38,30 +38,50 @@ import os
 
 
 if __name__ == "__main__":
+    # 获取暂存区中所有文件的状态
+    # --cached: 只查看暂存区的变更
+    # --name-status: 显示文件名和状态（A=新增, M=修改, D=删除）
     files = subprocess.check_output(['git', 'diff', '--cached', '--name-status'], text=True, encoding='utf-8').split('\n')
+
+    # 遍历每个文件
     for file in files:
+        # 检查文件状态是否有效，且不是删除操作（'D'）
         if len(file.split("\t")[0]) > 0 and file.split("\t")[0] != 'D':
+            # 提取文件路径（格式：状态\t文件路径）
             file_path = file.split("\t")[-1]
+
+            # 获取文件大小（字节）
             file_size = os.path.getsize(file_path)
+
+            # 转换为 MB（1 MB = 1024 * 1024 字节）
             size_in_mb = file_size / (1024 * 1024)
+
+            # 检查文件是否超过 50MB 阈值
             if size_in_mb >= 50:
+                # 将大文件路径添加到 .gitignore
+                # 'a' 模式：追加写入，不覆盖原有内容
                 with open('.gitignore', 'a', encoding='utf-8') as f:
                     f.write(file_path + '\n')
+
                 try:
-                    # Remove the file from the Git index (staged area)
+                    # 从 Git 索引（暂存区）移除文件
+                    # --cached: 只从索引移除，保留工作目录中的文件
                     subprocess.check_output(['git', 'rm', '--cached', file_path])
                     print("Removed {} from stage".format(file_path))
                 except subprocess.CalledProcessError as e:
                     print("Error removing file from stage: {}".format(e))
-                
+
                 try:
-                    # Reset the file to unstage changes
+                    # 重置文件状态，取消暂存
                     subprocess.check_output(['git', 'reset', file_path])
                 except subprocess.CalledProcessError as e:
                     print("Error while resetting file: {}".format(e))
 
+                # 提示用户并阻止提交
                 print("The file is larger than 50MB and has been added to .gitignore. Please confirm and recommit!")
                 print(file_path + "\n")
+
+                # 返回非零退出码，阻止 git commit 继续执行
                 exit(1)
 
 
